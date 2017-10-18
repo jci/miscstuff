@@ -1,0 +1,59 @@
+Unattended 
+- as root
+mysql> use mysql
+mysql> update user set plugin='mysql_native_password';
+
+server conf
+
+
+server-id=1
+log-bin=mysql-bin
+innodb_flush_log_at_trx_commit=1
+sync_binlog=1
+
+gtid-mode=on
+enforce_gtid_consistency=true
+log_slave_updates=true
+sync-master-info=1
+master-verify-checksum=1
+report-host=master
+
+
+
+
+
+on master (binlog)
+FLUSH TABLES WITH READ LOCK;
+
+
+slave
+server-id=2
+log-error	= /var/log/mysql/error.log
+relay-log = relay-log
+gtid_mode=ON
+enforce_gtid_consistency=true 
+log_slave_updates=true
+
+log-slave-updates=true
+log-bin
+
+
+
+
+This situation can occur if the --relay-log option is not specified, as the relay log files contain the host name as part of their file names. This is also true of the relay log index file if the --relay-log-index option is not used. See Section 17.1.6, “Replication and Binary Logging Options and Variables”, for more information about these options.
+
+SELECT * FROM mysql.gtid_executed;
+
+-----------
+
+
+ change master to master_host='192.168.0.100',master_user='replication',master_password='1234', master_auto_position=1;
+
+
+SELECT * FROM performance_schema.threads WHERE NAME LIKE '%gtid%'\G
+
+
+mysqlbinlog file.bin | more
+
+
+mysqlbinlog --read-from-remote-server --read-from-remote-master=BINLOG-DUMP-NON-GTIDS --stop-never --host  192.168.0.10--port 3306 -ureplication -p1234 --verbose mysql-bin.000004
